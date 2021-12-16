@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import altair as alt
 import datetime
+from vega_datasets import data as vdata
 
 st.title('Covid19 Dashboard')
 
@@ -109,6 +110,48 @@ with col3:
     st.subheader("Recoverd")
     st.metric("", '{:,}  \n'.format(df1['r']), '{:,} '.format(newCases['r']))
 
+
+### world map
+
+confirmed_today = toDay_data[toDay_data['type'] == 'c']
+filter_location = confirmed_today.groupby(['country']).mean()
+map_filter = filter_location.loc['Guatemala']
+
+## background map
+source = alt.topo_feature(vdata.world_110m.url, 'countries')
+
+base = alt.Chart(source).mark_geoshape(
+    fill='#666666',
+    stroke='white'
+).properties(
+    width=1000,
+    height=480
+).project(
+  type='equirectangular',
+  scale= 400,
+  center=[map_filter['lon'], map_filter['lat']]
+)
+
+points = alt.Chart(confirmed_today).transform_aggregate(
+    lat='mean(lat)',
+    lon='mean(lon)',
+    sum_cases='sum(cases)',
+    groupby=['country']
+).mark_circle().encode(
+    longitude='lon:Q',
+    latitude='lat:Q',
+    size=alt.Size('sum_cases:Q',scale=alt.Scale(range=[100, 500]), title='Number Cases'),
+    color=alt.value('steelblue'),
+    tooltip=['country:N','sum_cases:Q','lon:Q','lat:Q']
+).properties(
+    title='Number of airports in US'
+).project(
+  type='equirectangular',
+  scale= 400,
+  center=[map_filter['lon'], map_filter['lat']]
+)
+
+st.altair_chart(base + points)
 
 ## global comportamiento
 global_by_date = data.groupby(['date','type'])[CASES_COLUMN].sum().sort_values().to_frame().reset_index()
