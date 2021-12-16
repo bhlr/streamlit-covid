@@ -10,6 +10,6 @@ RUN pip install --upgrade pip
 RUN pip install streamlit
 RUN pip install -r requirements.txt
 
-COPY ./src /src
+COPY . /app/
 ENTRYPOINT [ "streamlit", "run"]
-CMD ["/src/app.py"]
+CMD ["/app/src/app.py"]
